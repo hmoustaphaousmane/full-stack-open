@@ -1,11 +1,12 @@
 import { useState } from 'react'
+
 import Input from './Input'
+import personService from '../services/persons'
 
 const PersonForm = ({ persons, setPersons }) => {
   console.log('Persons list in PersonForm', persons)
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
-  // const filteredPersons = []
 
   const addNewPerson = (event) => {
     event.preventDefault()
@@ -16,18 +17,43 @@ const PersonForm = ({ persons, setPersons }) => {
     else {
       const names = persons.map(person => person.name)
       const numbers = persons.map(person => person.number)
-      if (names.includes(newName))
-        alert(`${newName} is already added to the phonebook`)
-      else if (numbers.includes(newNumber))
+      if (names.includes(newName)) {
+        const confirmation = confirm(`${newName} is already added to the phonebook, replace the old number with a new one?`)
+        if (confirmation) {
+          const person = persons.find(p => p.name === newName)
+          console.log('existing', person)
+          const changedPerson = { ...person, number: newNumber }
+
+          personService
+            .updatePerson(person.id, changedPerson)
+            .then(returnedPerson => {
+              setPersons(persons.map(p => p.id !== person.id ? p : returnedPerson))
+            })
+            .catch(error => {
+              alert(error)
+              setPersons(persons.filter(p => p.id != person.id))
+            })
+        }
+      }
+      else if (numbers.includes(newNumber)) {
         alert(`${newNumber} is already added to the phonebook`)
+      }
       else {
-        const copy = [...persons]
-        console.log('Copy of persons:', copy)
-        copy[copy.length] = { name: newName, number: newNumber, id: copy.length + 1 }
-        console.log('Copy of persons updated:', copy)
-        setPersons(copy)
-        setNewName('')
-        setNewNumber('')
+        const newObject = {
+          name: newName,
+          number: newNumber,
+          id: String(persons.length + 1)
+        }
+
+        personService
+          .createPerson(newObject)
+          .then(returnedPerson => {
+            console.log('added:', returnedPerson)
+            setPersons(persons.concat(returnedPerson))
+
+            setNewName('')
+            setNewNumber('')
+          })
       }
     }
   }
@@ -44,19 +70,19 @@ const PersonForm = ({ persons, setPersons }) => {
 
   return (
 
-  <div>
-    <form onSubmit={addNewPerson}>
-      <div>
-        name: <Input value={newName} handler={handleNameChange} />
-      </div>
-      <div>
-        number: <Input value={newNumber} handler={handleNumberChange} />
-      </div>
-      <div>
-        <button type="submit">add</button>
-      </div>
-    </form>
-  </div>
+    <div>
+      <form onSubmit={addNewPerson}>
+        <div>
+          name: <Input value={newName} handler={handleNameChange} />
+        </div>
+        <div>
+          number: <Input value={newNumber} handler={handleNumberChange} />
+        </div>
+        <div>
+          <button type="submit">add</button>
+        </div>
+      </form>
+    </div>
   )
 }
 
