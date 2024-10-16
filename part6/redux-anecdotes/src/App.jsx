@@ -5,18 +5,13 @@ import Filter from './components/Filter'
 import Notification from './components/Notification'
 import { useEffect } from 'react'
 import anecdoteService from './services/anecdotes'
-import { setAnecdotes } from './reducers/anecdoteReducer'
+import { initializeAncdotes, setAnecdotes } from './reducers/anecdoteReducer'
 
 const App = () => {
   const dispatch = useDispatch()
 
   useEffect(() => {
-    const fetchAnecdotes = async () => {
-      const anecdotes = await anecdoteService.getAll()
-      console.log('effect:', anecdotes)
-      dispatch(setAnecdotes(anecdotes))
-    }
-    fetchAnecdotes()
+    dispatch(initializeAncdotes())
   }, [dispatch])
 
   return (
